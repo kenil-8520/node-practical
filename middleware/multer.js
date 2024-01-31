@@ -55,7 +55,7 @@ upload.customErrorHandler = function (err, req, res, next) {
       } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
         res.status(400).json({
           success : false,
-          message: 'You added maximum 1 files.' });
+          message: 'More than 1 image selected' });
       }
     } else if (err) {
       res.status(500).json({

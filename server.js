@@ -1,6 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 const authrouter = require('./routers/authRouters.js')
+const mult = require('./middleware/multer.js')
 
 
 const app = express()
@@ -14,6 +15,9 @@ app.use(express.json())
 
 app.use(express.urlencoded({extended: true}))
 
+app.use(express.static('public'));
+app.use('/uploads', express.static('uploads'));
+
 app.get('/', (req, res) =>{
     res.json({message : "API working"})
 })
@@ -26,3 +30,4 @@ const PORT = 8080
 app.listen(PORT, () => {
     console.log("server running on http://localhost:8080");
 })
+app.use(mult.customErrorHandler)
