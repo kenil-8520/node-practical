@@ -32,6 +32,19 @@ module.exports = (sequelize, DataTypes) => {
         bg_image:{
             type:DataTypes.STRING,
             allowNull: true
+        },
+        link:{
+            type:DataTypes.STRING,
+            allowNull: false
+        },
+        tracker:{
+            type:DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue:0
+        },
+        expireAt: {
+            type: DataTypes.DATE,
+            allowNull: false
         }
     },)
     return postcard

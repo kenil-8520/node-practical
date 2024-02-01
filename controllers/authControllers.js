@@ -14,6 +14,8 @@ dotenv.config();
 
 const User = db.user;
 
+
+
 const logIn = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -54,6 +56,11 @@ const logIn = async (req, res) => {
 
 const Postcard = db.postcard;
 
+const generateUniqueLink = () => {
+  const uuid = require('uuid');
+  return uuid.v4();
+}
+
 const createPostCard = async (req, res) => {
 
   try {
@@ -93,6 +100,9 @@ const createPostCard = async (req, res) => {
     if (!zipcodeRegex.test(zipcode)) {
       return res.status(400).json({ success: false, message: "Invalid zipcode format" });
     }
+    const uniqueLink = generateUniqueLink();
+    const expireAt = new Date();
+    expireAt.setMinutes(expireAt.getMinutes() + 1);
 
     const newProfile = await Postcard.create({
       recipient_name: name,
@@ -103,6 +113,8 @@ const createPostCard = async (req, res) => {
       zipcode: zipcode,
       message: message,
       bg_image : filepath,
+      link: uniqueLink,
+      expireAt: expireAt
     });
 
     return res.status(201).json({ success: true, data: newProfile, message: "Postcard created successfully"});
@@ -126,8 +138,29 @@ const listPostCard = async (req, res) => {
     if (search) {
       options.where.recipient_name = { [Op.like]: `%${search}%` };
     }
-
+    const totalCount = await Postcard.count({ where: options.where });
     const data = await Postcard.findAll(options);
+
+    const customizedData = data.map(postcard => {
+      const newLink = postcard.link;
+      const filepath = '/api/unique-postcard/' + newLink;
+
+      return {
+        id: postcard.id,
+        recipient_name: postcard.recipient_name,
+        street_1: postcard.street_1,
+        street_2: postcard.street_2,
+        city: postcard.city,
+        state: postcard.state,
+        zipcode: postcard.zipcode,
+        message: postcard.message,
+        bg_image: postcard.bg_image,
+        link: filepath,
+        tracker: postcard.tracker,
+        createdAt: postcard.createdAt,
+        updatedAt: postcard.updatedAt
+      };
+    });
 
     if (!data || data.length === 0) {
       return res.status(404).json({ success: true, message: "No postcard found" });
@@ -135,10 +168,11 @@ const listPostCard = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: data,
+      data: customizedData,
       message: "Retrieved postcards successfully",
       currentPage: page,
-      totalPages: Math.ceil(data.length / limit),
+      totatData: totalCount,
+      totalPages: Math.ceil(totalCount / limit),
     });
   } catch (error) {
     const errors = error.errors[0]?.message || error.message?.errors || error.errors ? errors: "Something went wrong";
@@ -147,8 +181,73 @@ const listPostCard = async (req, res) => {
   }
 };
 
+const getPostcard = async (req, res) => {
+  try {
+    const id = req.params.link;
+    const currentDate = Date.now()
+    const data = await Postcard.findOne({ where: { link: id } });
+    if (data.expireAt < currentDate){
+      return res.status(400).json({ success: true, message: "Your link has been expired" });
+    }
+    const currentTrackerValue = data.tracker;
+    const newTrackerValue = currentTrackerValue + 1;
+    await Postcard.update({ tracker: newTrackerValue }, { where: { link: id } });
+    const custommizeData = {
+      id: data.id,
+      recipient_name: data.recipient_name,
+      street_1: data.street_1,
+      city: data.city,
+      state: data.state,
+      zipcode: data.zipcode,
+      message: data.message,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt
+    };
+    if (!data) {
+      return res.status(404).json({ success: true, message: "No postcard found" });
+    }
+    return res.status(200).json({ success: true, data: custommizeData, message: "Retrieved postcard data" });
+  } catch (error) {
+    const errors = error.message || error.errors[0]?.message || error.message?.errors || error.errors || "Something went wrong";
+    if (error.message && error.message.includes("Truncated incorrect DOUBLE value")) {
+        return res.status(500).json({ success:false, error: 'Invalid postcard link' });
+      }
+    return res.status(400).json({ success: false, message: errors });
+  }
+};
+
+
+const getPostcardById = async (req, res) => {
+  try {
+
+    const id = req.params.id;
+    const data = await Postcard.findOne({ where: { id: id } });
+    const expireAt = new Date();
+    expireAt.setMinutes(expireAt.getMinutes() + 1);
+
+    const uniqueLink = generateUniqueLink();
+
+    await Postcard.update({ link: uniqueLink, expireAt: expireAt }, { where: { id: id } });
+
+    const updatedData = await Postcard.findOne({ where: { id: id } });
+
+    if (!data) {
+      return res.status(404).json({ success: true, message: "No postcard found" });
+    }
+    return res.status(200).json({ success: true, data: updatedData, message: "Retrieved postcard data" });
+  } catch (error) {
+    const errors = error.message || error.errors[0]?.message || error.message?.errors || error.errors || "Something went wrong";
+    if (error.message && error.message.includes("Truncated incorrect DOUBLE value")) {
+        return res.status(500).json({ success:false, error: 'Invalid postcard link' });
+      }
+    return res.status(400).json({ success: false, message: errors });
+  }
+};
+
 module.exports = {
   logIn,
   createPostCard,
   listPostCard,
+  getPostcard,
+  getPostcardById
 };

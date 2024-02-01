@@ -1,5 +1,5 @@
 const express = require("express");
-const { logIn, createPostCard, listPostCard } = require("../controllers/authControllers");
+const { logIn, createPostCard, listPostCard, getPostcard, getPostcardById } = require("../controllers/authControllers");
 const verifyToken = require("../middleware/authMiddleware");
 const multer = require("multer");
 const upload = require("../middleware/multer");
@@ -11,5 +11,9 @@ router.post("/login", multer().none(), logIn);
 router.post("/create-postcard", verifyToken, upload.single('file'), createPostCard);
 
 router.get("/all-postcard", verifyToken, listPostCard);
+
+router.get("/unique-postcard/:link", getPostcard);
+
+router.get("/postcard/:id", getPostcardById);
 
 module.exports = router;
