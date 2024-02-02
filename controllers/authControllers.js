@@ -111,7 +111,7 @@ const createPostCard = async (req, res) => {
       expireAt: expireAt,
       userId: userId
     });
-    const link = '/api/unique-postcard/' + uniqueLink;
+    const link = 'http://localhost:8080/api/unique-postcard/' + uniqueLink;
     const responseData = {
       data: {
         recipient_name: newProfile.recipient_name,
@@ -153,14 +153,21 @@ const listPostCard = async (req, res) => {
       options.where.userId = userId;
     }
     if (search) {
-      options.where.recipient_name = { [Op.like]: `%${search}%` };
+      options.where[Op.or] = [
+        { recipient_name: { [Op.like]: `%${search}%` } },
+        { street_1: { [Op.like]: `%${search}%` } },
+        { city: { [Op.like]: `%${search}%` } },
+        { state: { [Op.like]: `%${search}%` } },
+        { zipcode: { [Op.like]: `%${search}%` } },
+
+    ];
     }
     const totalCount = await Postcard.count({ where: options.where });
     const data = await Postcard.findAll(options);
 
     const customizedData = data.map(postcard => {
       const newLink = postcard.link;
-      const filepath = '/api/unique-postcard/' + newLink;
+      const filepath = 'http://localhost:8080/api/unique-postcard/' + newLink;
 
       return {
         recipient_name: postcard.recipient_name,
@@ -174,7 +181,6 @@ const listPostCard = async (req, res) => {
         link: filepath,
         tracker: postcard.tracker,
         createdAt: postcard.createdAt,
-        updatedAt: postcard.updatedAt
       };
     });
 
@@ -217,7 +223,6 @@ const getPostcard = async (req, res) => {
       zipcode: data.zipcode,
       message: data.message,
       createdAt: data.createdAt,
-      updatedAt: data.updatedAt
     };
     if (!data) {
       return res.status(404).json({ success: true, message: "No postcard found" });
@@ -242,7 +247,7 @@ const getPostcardById = async (req, res) => {
     expireAt.setMinutes(expireAt.getMinutes() + 1);
 
     const uniqueLink = generateUniqueLink();
-    const link = '/api/unique-postcard/' + uniqueLink;
+    const link = 'http://localhost:8080/api/unique-postcard/' + uniqueLink;
 
     await Postcard.update({ link: uniqueLink, expireAt: expireAt }, { where: { id: id } });
 
@@ -262,7 +267,6 @@ const getPostcardById = async (req, res) => {
         expireAt: updatedData.expireAt,
         userId: updatedData.userId,
         createdAt: updatedData.createdAt,
-        updatedAt: updatedData.updatedAt,
       },
     };
     if (!data) {
