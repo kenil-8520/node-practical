@@ -3,32 +3,31 @@ const bcrypt = require('bcrypt');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.bulkDelete('Users', null, {});
+    const userData = [
+      { email: 'admin@gmail.com', password: 'admin' },
+      { email: 'demo@gmail.com', password: 'demo' },
+      // { email: 'test@gmail.com', password: 'test' },
+    ];
 
-    const hashedPassword1 = await bcrypt.hash('admin', 10);
-    const hashedPassword2 = await bcrypt.hash('demo', 10);
-    const hashedPassword3 = await bcrypt.hash('test', 10);
+    for (const user of userData) {
+      const hashedPassword = await bcrypt.hash(user.password, 10);
 
-    await queryInterface.bulkInsert('Users', [
-      {
-        email: 'admin@gmail.com',
-        password: hashedPassword1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        email: 'demo@gmail.com',
-        password: hashedPassword2,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        email: 'test@gmail.com',
-        password: hashedPassword3,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ]);
+      const existingUser = await queryInterface.sequelize.query(
+        `SELECT * FROM Users WHERE email = '${user.email}' LIMIT 1`,
+        { type: queryInterface.sequelize.QueryTypes.SELECT }
+      );
+
+      if (!existingUser || existingUser.length === 0) {
+        await queryInterface.bulkInsert('Users', [
+          {
+            email: user.email,
+            password: hashedPassword,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ]);
+      }
+    }
   },
 
   down: async (queryInterface, Sequelize) => {

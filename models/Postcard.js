@@ -1,4 +1,3 @@
-
 module.exports = (sequelize, DataTypes) => {
     const postcard = sequelize.define("postcard", {
         recipient_name: {
@@ -45,7 +44,21 @@ module.exports = (sequelize, DataTypes) => {
         expireAt: {
             type: DataTypes.DATE,
             allowNull: false
-        }
+        },
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'Users',
+                key: 'id'
+            }
+        },
     },)
+    postcard.associate = (models) => {
+        postcard.belongsTo(User, {
+            foreignKey: 'userId',
+            onDelete: 'CASCADE',
+        });
+    };
     return postcard
 }

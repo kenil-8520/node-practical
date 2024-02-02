@@ -63,6 +63,7 @@ const generateUniqueLink = () => {
 const createPostCard = async (req, res) => {
 
   try {
+    const userId = req.user.id;
     let filepath = null;
     if (req.file) {
       filepath = '/uploads/' + req.file.filename;
@@ -113,7 +114,8 @@ const createPostCard = async (req, res) => {
       message: message,
       bg_image : filepath,
       link: uniqueLink,
-      expireAt: expireAt
+      expireAt: expireAt,
+      userId: userId
     });
 
     return res.status(201).json({ success: true, data: newProfile, message: "Postcard created successfully"});
@@ -133,7 +135,14 @@ const listPostCard = async (req, res) => {
       limit: parseInt(limit),
       where: {},
     };
-
+    const token = req.headers.authorization;
+    if (!token) {
+      return res.status(401).send({ auth: false, message: 'No Token Provided'});
+    }
+    else{
+      const userId = req.user.id;
+      options.where.userId = userId;
+    }
     if (search) {
       options.where.recipient_name = { [Op.like]: `%${search}%` };
     }
@@ -145,7 +154,6 @@ const listPostCard = async (req, res) => {
       const filepath = '/api/unique-postcard/' + newLink;
 
       return {
-        id: postcard.id,
         recipient_name: postcard.recipient_name,
         street_1: postcard.street_1,
         street_2: postcard.street_2,
