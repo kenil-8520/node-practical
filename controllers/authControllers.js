@@ -1,19 +1,13 @@
 const db = require("../models");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const multer = require("multer");
-const multerUpload = require('../middleware/multer');
-const path = require("path");
 const { Op } = require('sequelize');
-
-
 const dotenv = require("dotenv");
+
 
 dotenv.config();
 
 const User = db.user;
-
-
 
 const logIn = async (req, res) => {
   try {
@@ -117,8 +111,23 @@ const createPostCard = async (req, res) => {
       expireAt: expireAt,
       userId: userId
     });
+    const link = '/api/unique-postcard/' + uniqueLink;
+    const responseData = {
+      data: {
+        recipient_name: newProfile.recipient_name,
+        street_1: newProfile.street_1,
+        street_2: newProfile.street_2,
+        city: newProfile.city,
+        state: newProfile.state,
+        zipcode: newProfile.zipcode,
+        message: newProfile.message,
+        bg_image: filepath,
+        link: link,
+        expireAt: newProfile.expireAt,
+      },
+    };
 
-    return res.status(201).json({ success: true, data: newProfile, message: "Postcard created successfully"});
+    return res.status(201).json({ success: true, data: responseData.data, message: "Postcard created successfully"});
   } catch (error) {
     console.error(error);
     return res.status(500).json({ status: false, message: "Internal Server Error" });
@@ -233,15 +242,33 @@ const getPostcardById = async (req, res) => {
     expireAt.setMinutes(expireAt.getMinutes() + 1);
 
     const uniqueLink = generateUniqueLink();
+    const link = '/api/unique-postcard/' + uniqueLink;
 
     await Postcard.update({ link: uniqueLink, expireAt: expireAt }, { where: { id: id } });
 
     const updatedData = await Postcard.findOne({ where: { id: id } });
-
+    const customResponse = {
+      data: {
+        recipient_name: updatedData.recipient_name,
+        street_1: updatedData.street_1,
+        street_2: updatedData.street_2,
+        city: updatedData.city,
+        state: updatedData.state,
+        zipcode: updatedData.zipcode,
+        message: updatedData.message,
+        bg_image: updatedData.bg_image,
+        link: link,
+        tracker: updatedData.tracker,
+        expireAt: updatedData.expireAt,
+        userId: updatedData.userId,
+        createdAt: updatedData.createdAt,
+        updatedAt: updatedData.updatedAt,
+      },
+    };
     if (!data) {
       return res.status(404).json({ success: true, message: "No postcard found" });
     }
-    return res.status(200).json({ success: true, data: updatedData, message: "Retrieved postcard data" });
+    return res.status(200).json({ success: true, data: customResponse.data, message: "Retrieved postcard data" });
   } catch (error) {
     const errors = error.message || error.errors[0]?.message || error.message?.errors || error.errors || "Something went wrong";
     if (error.message && error.message.includes("Truncated incorrect DOUBLE value")) {

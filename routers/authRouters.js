@@ -14,6 +14,6 @@ router.get("/all-postcard", verifyToken, listPostCard);
 
 router.get("/unique-postcard/:link", getPostcard);
 
-router.get("/postcard/:id", getPostcardById);
+router.put("/postcard/:id", getPostcardById);
 
 module.exports = router;
