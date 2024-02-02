@@ -1,5 +1,10 @@
 const express = require("express");
-const { logIn, createPostCard, listPostCard, getPostcard, getPostcardById } = require("../controllers/authControllers");
+const logIn = require("../controllers/loginControllers")
+const createPostCard = require("../controllers/postcardControllers")
+const listPostCard = require("../controllers/listpostcardControllers")
+const getPostcard = require("../controllers/uniquepostcardControllers")
+const getPostcardById = require("../controllers/updatelinkControllers")
+
 const verifyToken = require("../middleware/authMiddleware");
 const multer = require("multer");
 const upload = require("../middleware/multer");
