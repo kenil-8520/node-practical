@@ -1,7 +1,6 @@
 const db = require("../models");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const joi = require("joi");
 const multer = require("multer");
 const multerUpload = require('../middleware/multer');
 const path = require("path");

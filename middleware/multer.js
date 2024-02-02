@@ -37,7 +37,7 @@ upload.customErrorHandler = function (err, req, res, next) {
       } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
         res.status(400).json({
           success : false,
-          message: 'You added maximum 2 files.' });
+          message: 'This filed can not contains any file!' });
       }
     } else if (err) {
       res.status(500).json({

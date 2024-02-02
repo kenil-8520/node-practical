@@ -3,6 +3,8 @@ const bcrypt = require('bcrypt');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+    await queryInterface.bulkDelete('Users', null, {});
+
     const hashedPassword1 = await bcrypt.hash('admin', 10);
     const hashedPassword2 = await bcrypt.hash('demo', 10);
     const hashedPassword3 = await bcrypt.hash('test', 10);
